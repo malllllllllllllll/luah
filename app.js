@@ -1,6 +1,5 @@
-// app.js — Luah with Supabase backend
+// app.js
 
-// State
 let vents = [];
 let currentIndex = -1;
 let activeMood = "Uncategorized";
@@ -53,9 +52,7 @@ function getMoodColor(mood) {
 }
 
 function formatTimeAgo(ts) {
-  if (!ts) return "";
-  const date = typeof ts === "string" ? new Date(ts) : ts;
-  const diff = Date.now() - date.getTime();
+  const diff = Date.now() - new Date(ts).getTime();
   const minutes = Math.round(diff / 60000);
 
   if (minutes < 1) return "just now";
@@ -68,76 +65,58 @@ function formatTimeAgo(ts) {
   return `${days} d ago`;
 }
 
-// ---------- SUPABASE HELPERS ----------
+// ---------- SUPABASE LOAD / SAVE ----------
 
-async function loadVentsFromDB() {
-  const { data, error } = await supabase
-    .from("vents")
-    .select("id, text, mood, created_at")
-    .order("created_at", { ascending: false });
+async function loadVentsFromSupabase() {
+  try {
+    const { data, error } = await supabase
+      .from("vents")
+      .select("id, text, mood, created_at")
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Error loading vents:", error);
+    if (error) {
+      console.error("Error loading vents:", error);
+      vents = [];
+      return;
+    }
+
+    vents = (data || []).map((row) => ({
+      id: row.id,
+      text: row.text || "",
+      mood: row.mood || "Uncategorized",
+      createdAt: row.created_at,
+      day: 1 // simple for now
+    }));
+  } catch (err) {
+    console.error("Unexpected error loading vents:", err);
     vents = [];
+  }
+}
+
+async function loadCommentsForVent(ventId) {
+  if (!ventId) {
+    commentList.innerHTML = "";
     return;
   }
 
-  vents = (data || []).map((v) => ({
-    ...v,
-    comments: [] // filled lazily
-  }));
-}
+  try {
+    const { data, error } = await supabase
+      .from("vent_comments")
+      .select("id, text, created_at")
+      .eq("vent_id", ventId)
+      .order("created_at", { ascending: true });
 
-async function createVentInDB(text, mood) {
-  const { data, error } = await supabase
-    .from("vents")
-    .insert([{ text, mood }])
-    .select()
-    .single();
+    if (error) {
+      console.error("Error loading comments:", error);
+      commentList.innerHTML = "";
+      return;
+    }
 
-  if (error) {
-    console.error("Error saving vent:", error);
-    alert("Could not save entry. Please try again.");
-    return null;
+    renderComments(data || []);
+  } catch (err) {
+    console.error("Unexpected error loading comments:", err);
+    commentList.innerHTML = "";
   }
-
-  return { ...data, comments: [] };
-}
-
-async function loadCommentsForVent(vent) {
-  if (!vent || !vent.id) return;
-
-  const { data, error } = await supabase
-    .from("vent_comments")
-    .select("id, text, created_at")
-    .eq("vent_id", vent.id)
-    .order("created_at", { ascending: true });
-
-  if (error) {
-    console.error("Error loading comments:", error);
-    vent.comments = [];
-  } else {
-    vent.comments = data || [];
-  }
-
-  renderComments(vent);
-  renderVentsList(); // update counts
-}
-
-async function createCommentInDB(vent, text) {
-  const { data, error } = await supabase
-    .from("vent_comments")
-    .insert([{ vent_id: vent.id, text }])
-    .select()
-    .single();
-
-  if (error) {
-    console.error("Error saving comment:", error);
-    alert("Could not post reply.");
-    return null;
-  }
-
-  return data;
 }
 
 // ---------- RENDER ----------
@@ -150,9 +129,9 @@ function refreshCurrentVent() {
     currentMoodLabel.textContent = "No mood yet";
     currentMoodDot.style.background = "rgba(148,163,184,0.7)";
     currentDayLabel.textContent = "Day 1";
-    heroCount.textContent = "0";
     prevVentBtn.disabled = true;
     nextVentBtn.disabled = true;
+    heroCount.textContent = "0";
     commentList.innerHTML = "";
     return;
   }
@@ -162,10 +141,10 @@ function refreshCurrentVent() {
 
   const vent = vents[currentIndex];
 
-  currentVentText.textContent = vent.text || "";
-  currentMoodLabel.textContent = vent.mood || "Uncategorized";
+  currentVentText.textContent = vent.text;
+  currentMoodLabel.textContent = vent.mood;
   currentMoodDot.style.background = getMoodColor(vent.mood);
-  currentDayLabel.textContent = "Day 1";
+  currentDayLabel.textContent = "Day " + (vent.day || 1);
   heroCount.textContent = vents.length.toString();
 
   prevVentBtn.disabled = currentIndex === 0;
@@ -175,12 +154,7 @@ function refreshCurrentVent() {
   void currentVentCard.offsetWidth;
   currentVentCard.classList.add("fade-in");
 
-  // Show loading state for comments, then fetch
-  commentList.innerHTML =
-    '<div class="empty-state" style="font-style: italic; padding: 0;">Loading replies...</div>';
-  loadCommentsForVent(vent).catch((err) =>
-    console.error("Comment load error:", err)
-  );
+  loadCommentsForVent(vent.id);
 }
 
 function renderVentsList() {
@@ -202,17 +176,14 @@ function renderVentsList() {
     div.className = "vent-row";
     div.dataset.id = v.id;
 
-    const replyCount = (v.comments || []).length;
-
     div.innerHTML = `
       <div class="vent-row-top">
-        <div class="vent-row-mood">${v.mood || "Uncategorized"}</div>
-        <div style="font-size: 10px;">${formatTimeAgo(v.created_at)}</div>
+        <div class="vent-row-mood">${v.mood}</div>
+        <div style="font-size: 10px;">${formatTimeAgo(v.createdAt)}</div>
       </div>
-      <div class="vent-row-text">${v.text || ""}</div>
+      <div class="vent-row-text">${v.text}</div>
       <div class="vent-row-meta">
         <span>${(v.text || "").length} chars</span>
-        <span>${replyCount} replies</span>
       </div>
     `;
 
@@ -232,9 +203,8 @@ function renderVentsList() {
   });
 }
 
-function renderComments(vent) {
+function renderComments(comments) {
   commentList.innerHTML = "";
-  const comments = vent.comments || [];
 
   if (!comments.length) {
     commentList.innerHTML =
@@ -252,7 +222,7 @@ function renderComments(vent) {
 
 // ---------- EVENT HANDLERS ----------
 
-// Typing in textarea
+// Textarea typing
 ventInput.addEventListener("input", () => {
   const length = ventInput.value.length;
   charCount.textContent = `${length} / 600`;
@@ -280,22 +250,48 @@ postVentBtn.addEventListener("click", async () => {
   const text = ventInput.value.trim();
   if (!text) return;
 
-  const mood = activeMood || "Uncategorized";
-  const newVent = await createVentInDB(text, mood);
-  if (!newVent) return;
-
-  // Newest at top
-  vents.unshift(newVent);
-
-  // Reset form
-  ventInput.value = "";
-  charCount.textContent = "0 / 600";
-  panelCounter.textContent = "0 / 600 used";
   postVentBtn.disabled = true;
 
-  currentIndex = 0;
-  refreshCurrentVent();
-  renderVentsList();
+  try {
+    const { data, error } = await supabase
+      .from("vents")
+      .insert({
+        text,
+        mood: activeMood || "Uncategorized"
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error inserting vent:", error);
+      return;
+    }
+
+    const newVent = {
+      id: data.id,
+      text: data.text,
+      mood: data.mood,
+      createdAt: data.created_at,
+      day: 1
+    };
+
+    vents.unshift(newVent);
+
+    ventInput.value = "";
+    charCount.textContent = "0 / 600";
+    panelCounter.textContent = "0 / 600 used";
+    postVentBtn.disabled = true;
+
+    currentIndex = 0;
+    refreshCurrentVent();
+    renderVentsList();
+  } catch (err) {
+    console.error("Unexpected error inserting vent:", err);
+  } finally {
+    if (ventInput.value.length > 0) {
+      postVentBtn.disabled = false;
+    }
+  }
 });
 
 // Navigation arrows
@@ -353,21 +349,31 @@ commentForm.addEventListener("submit", async (e) => {
   if (!text) return;
 
   const vent = vents[currentIndex];
-  const saved = await createCommentInDB(vent, text);
-  if (!saved) return;
 
-  if (!vent.comments) vent.comments = [];
-  vent.comments.push(saved);
+  try {
+    const { error } = await supabase
+      .from("vent_comments")
+      .insert({
+        vent_id: vent.id,
+        text
+      });
 
-  commentInput.value = "";
-  renderComments(vent);
-  renderVentsList();
+    if (error) {
+      console.error("Error inserting comment:", error);
+      return;
+    }
+
+    commentInput.value = "";
+    await loadCommentsForVent(vent.id);
+  } catch (err) {
+    console.error("Unexpected error inserting comment:", err);
+  }
 });
 
 // ---------- INIT ----------
 
 async function init() {
-  await loadVentsFromDB();
+  await loadVentsFromSupabase();
   currentIndex = vents.length ? 0 : -1;
   refreshCurrentVent();
   renderVentsList();

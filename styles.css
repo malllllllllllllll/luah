@@ -163,6 +163,7 @@ header {
   position: relative;
 }
 
+/* subtle glow ring behind the card */
 .current-vent-wrap::before {
   content: "";
   position: absolute;
@@ -248,10 +249,9 @@ header {
 .vent-card {
   margin-top: 10px;
   border-radius: 20px;
-  background:
-    radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.06), transparent 55%),
-    radial-gradient(circle at 100% 100%, rgba(249, 115, 22, 0.08), transparent 55%),
-    var(--bg-softer);
+  background: radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.06), transparent 55%),
+              radial-gradient(circle at 100% 100%, rgba(249, 115, 22, 0.08), transparent 55%),
+              var(--bg-softer);
   border: 1px solid rgba(148, 163, 184, 0.5);
   padding: 16px 14px 14px;
   position: relative;
@@ -733,7 +733,7 @@ textarea:focus {
   margin-top: 11px;
   width: 100%;
   border-radius: var(--radius-full);
-  border: 1px solid rgba(148, 163, 184, 0.65);
+  border: 1px solid rgba(148, 163, 184, 0.55);
   padding: 10px 14px;
   font-size: 13px;
   font-weight: 500;
@@ -742,20 +742,17 @@ textarea:focus {
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.35), transparent 55%),
-    radial-gradient(circle at 100% 100%, rgba(249, 115, 22, 0.30), transparent 55%),
-    #020617;
+  background: radial-gradient(circle at 0 0, rgba(56,189,248,0.16), transparent 55%),
+              radial-gradient(circle at 100% 100%, rgba(249,115,22,0.16), transparent 55%),
+              #020617;
   color: #e5e7eb;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.95);
+  box-shadow: 0 14px 32px rgba(15,23,42,0.95);
   transition:
     transform var(--transition-fast),
     box-shadow var(--transition-fast),
+    border-color var(--transition-fast),
     filter var(--transition-fast),
-    opacity var(--transition-fast),
-    border-color var(--transition-fast);
+    opacity var(--transition-fast);
 }
 
 .primary-btn svg {
@@ -763,20 +760,16 @@ textarea:focus {
   height: 16px;
 }
 
-.primary-btn:hover {
+.primary-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.98);
-  border-color: rgba(148, 163, 184, 0.9);
-  filter: brightness(1.03);
-}
-
-.primary-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.98);
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 1px rgba(56,189,248,0.5),
+    0 18px 40px rgba(15,23,42,0.98);
 }
 
 .primary-btn:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: default;
   transform: none;
   box-shadow: none;

@@ -51,12 +51,7 @@ header {
 .brand {
   display: flex;
   align-items: center;
-}
-
-.brand-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  gap: 12px;
 }
 
 .brand-name {
@@ -64,21 +59,12 @@ header {
   letter-spacing: 0.18em;
   font-size: 13px;
   text-transform: uppercase;
-  color: #f9fafb;
-}
-
-.brand-underline {
-  width: 72px;
-  height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(to right, #38bdf8, #a855f7, #f97316);
-  opacity: 0.9;
+  color: var(--text-main);
 }
 
 .brand-tagline {
   font-size: 11px;
   color: var(--text-dim);
-  margin-top: 4px;
 }
 
 .pill {
@@ -177,7 +163,6 @@ header {
   position: relative;
 }
 
-/* subtle glow behind card */
 .current-vent-wrap::before {
   content: "";
   position: absolute;
@@ -331,7 +316,7 @@ header {
   color: var(--text-dim);
 }
 
-/* arrows */
+/* arrows under card */
 
 .vent-nav {
   display: inline-flex;
@@ -748,7 +733,7 @@ textarea:focus {
   margin-top: 11px;
   width: 100%;
   border-radius: var(--radius-full);
-  border: none;
+  border: 1px solid rgba(148, 163, 184, 0.65);
   padding: 10px 14px;
   font-size: 13px;
   font-weight: 500;
@@ -757,19 +742,20 @@ textarea:focus {
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  background: linear-gradient(
-    120deg,
-    #38bdf8,
-    #a855f7,
-    #f97316
-  );
-  color: #020617;
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.98);
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.35), transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(249, 115, 22, 0.30), transparent 55%),
+    #020617;
+  color: #e5e7eb;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.95);
   transition:
     transform var(--transition-fast),
     box-shadow var(--transition-fast),
     filter var(--transition-fast),
-    opacity var(--transition-fast);
+    opacity var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .primary-btn svg {
@@ -779,16 +765,18 @@ textarea:focus {
 
 .primary-btn:hover {
   transform: translateY(-1px);
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.98);
+  border-color: rgba(148, 163, 184, 0.9);
   filter: brightness(1.03);
 }
 
 .primary-btn:active {
   transform: translateY(0);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.98);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.98);
 }
 
 .primary-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.45;
   cursor: default;
   transform: none;
   box-shadow: none;

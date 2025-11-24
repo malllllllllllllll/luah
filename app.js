@@ -1,7 +1,6 @@
-// app.js
+// app.js — Luah with Supabase backend
 
-const STORAGE_KEY = "quietroom_entries_v1";
-
+// State
 let vents = [];
 let currentIndex = -1;
 let activeMood = "Uncategorized";
@@ -33,73 +32,6 @@ const commentForm = document.getElementById("commentForm");
 const commentInput = document.getElementById("commentInput");
 const commentList = document.getElementById("commentList");
 
-// ---------- STORAGE ----------
-
-function loadVents() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      vents = seedVents();
-      return;
-    }
-    const parsed = JSON.parse(raw);
-    vents = Array.isArray(parsed) ? parsed : seedVents();
-  } catch (err) {
-    console.warn("Error loading entries, seeding defaults:", err);
-    vents = seedVents();
-  }
-}
-
-function saveVents() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(vents));
-  } catch (err) {
-    console.warn("Unable to save entries:", err);
-  }
-}
-
-function seedVents() {
-  const now = Date.now();
-  return [
-    {
-      id: "seed-1",
-      text: "Trying to give myself credit for small wins instead of only noticing failures.",
-      mood: "Hopeful",
-      createdAt: now - 1000 * 60 * 60,
-      day: 1,
-      comments: [
-        {
-          id: "c1",
-          text: "That absolutely counts. Tiny wins stack.",
-          createdAt: now - 1000 * 60 * 40
-        }
-      ]
-    },
-    {
-      id: "seed-2",
-      text: "Brain is loud, body is tired, but I showed up anyway today.",
-      mood: "Heavy",
-      createdAt: now - 1000 * 60 * 30,
-      day: 1,
-      comments: []
-    },
-    {
-      id: "seed-3",
-      text: "Walked outside at night for five minutes and it helped more than I expected.",
-      mood: "Calm",
-      createdAt: now - 1000 * 60 * 12,
-      day: 1,
-      comments: [
-        {
-          id: "c2",
-          text: "Night walks are underrated therapy.",
-          createdAt: now - 1000 * 60 * 10
-        }
-      ]
-    }
-  ];
-}
-
 // ---------- UTIL ----------
 
 function getMoodColor(mood) {
@@ -121,7 +53,9 @@ function getMoodColor(mood) {
 }
 
 function formatTimeAgo(ts) {
-  const diff = Date.now() - ts;
+  if (!ts) return "";
+  const date = typeof ts === "string" ? new Date(ts) : ts;
+  const diff = Date.now() - date.getTime();
   const minutes = Math.round(diff / 60000);
 
   if (minutes < 1) return "just now";
@@ -134,6 +68,78 @@ function formatTimeAgo(ts) {
   return `${days} d ago`;
 }
 
+// ---------- SUPABASE HELPERS ----------
+
+async function loadVentsFromDB() {
+  const { data, error } = await supabase
+    .from("vents")
+    .select("id, text, mood, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error loading vents:", error);
+    vents = [];
+    return;
+  }
+
+  vents = (data || []).map((v) => ({
+    ...v,
+    comments: [] // filled lazily
+  }));
+}
+
+async function createVentInDB(text, mood) {
+  const { data, error } = await supabase
+    .from("vents")
+    .insert([{ text, mood }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error saving vent:", error);
+    alert("Could not save entry. Please try again.");
+    return null;
+  }
+
+  return { ...data, comments: [] };
+}
+
+async function loadCommentsForVent(vent) {
+  if (!vent || !vent.id) return;
+
+  const { data, error } = await supabase
+    .from("vent_comments")
+    .select("id, text, created_at")
+    .eq("vent_id", vent.id)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Error loading comments:", error);
+    vent.comments = [];
+  } else {
+    vent.comments = data || [];
+  }
+
+  renderComments(vent);
+  renderVentsList(); // update counts
+}
+
+async function createCommentInDB(vent, text) {
+  const { data, error } = await supabase
+    .from("vent_comments")
+    .insert([{ vent_id: vent.id, text }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error saving comment:", error);
+    alert("Could not post reply.");
+    return null;
+  }
+
+  return data;
+}
+
 // ---------- RENDER ----------
 
 function refreshCurrentVent() {
@@ -144,9 +150,9 @@ function refreshCurrentVent() {
     currentMoodLabel.textContent = "No mood yet";
     currentMoodDot.style.background = "rgba(148,163,184,0.7)";
     currentDayLabel.textContent = "Day 1";
+    heroCount.textContent = "0";
     prevVentBtn.disabled = true;
     nextVentBtn.disabled = true;
-    heroCount.textContent = "0";
     commentList.innerHTML = "";
     return;
   }
@@ -156,10 +162,10 @@ function refreshCurrentVent() {
 
   const vent = vents[currentIndex];
 
-  currentVentText.textContent = vent.text;
-  currentMoodLabel.textContent = vent.mood;
+  currentVentText.textContent = vent.text || "";
+  currentMoodLabel.textContent = vent.mood || "Uncategorized";
   currentMoodDot.style.background = getMoodColor(vent.mood);
-  currentDayLabel.textContent = "Day " + (vent.day || 1);
+  currentDayLabel.textContent = "Day 1";
   heroCount.textContent = vents.length.toString();
 
   prevVentBtn.disabled = currentIndex === 0;
@@ -169,7 +175,12 @@ function refreshCurrentVent() {
   void currentVentCard.offsetWidth;
   currentVentCard.classList.add("fade-in");
 
-  renderComments(vent);
+  // Show loading state for comments, then fetch
+  commentList.innerHTML =
+    '<div class="empty-state" style="font-style: italic; padding: 0;">Loading replies...</div>';
+  loadCommentsForVent(vent).catch((err) =>
+    console.error("Comment load error:", err)
+  );
 }
 
 function renderVentsList() {
@@ -191,15 +202,17 @@ function renderVentsList() {
     div.className = "vent-row";
     div.dataset.id = v.id;
 
+    const replyCount = (v.comments || []).length;
+
     div.innerHTML = `
       <div class="vent-row-top">
-        <div class="vent-row-mood">${v.mood}</div>
-        <div style="font-size: 10px;">${formatTimeAgo(v.createdAt)}</div>
+        <div class="vent-row-mood">${v.mood || "Uncategorized"}</div>
+        <div style="font-size: 10px;">${formatTimeAgo(v.created_at)}</div>
       </div>
-      <div class="vent-row-text">${v.text}</div>
+      <div class="vent-row-text">${v.text || ""}</div>
       <div class="vent-row-meta">
         <span>${(v.text || "").length} chars</span>
-        <span>${(v.comments || []).length} replies</span>
+        <span>${replyCount} replies</span>
       </div>
     `;
 
@@ -229,19 +242,17 @@ function renderComments(vent) {
     return;
   }
 
-  comments
-    .slice()
-    .sort((a, b) => a.createdAt - b.createdAt)
-    .forEach((c) => {
-      const div = document.createElement("div");
-      div.className = "comment";
-      div.innerHTML = `<span>${formatTimeAgo(c.createdAt)} · </span>${c.text}`;
-      commentList.appendChild(div);
-    });
+  comments.forEach((c) => {
+    const div = document.createElement("div");
+    div.className = "comment";
+    div.innerHTML = `<span>${formatTimeAgo(c.created_at)} · </span>${c.text}`;
+    commentList.appendChild(div);
+  });
 }
 
 // ---------- EVENT HANDLERS ----------
 
+// Typing in textarea
 ventInput.addEventListener("input", () => {
   const length = ventInput.value.length;
   charCount.textContent = `${length} / 600`;
@@ -250,6 +261,7 @@ ventInput.addEventListener("input", () => {
   postVentBtn.disabled = length === 0;
 });
 
+// Mood selection
 moodButtonsWrap.addEventListener("click", (event) => {
   const btn = event.target.closest(".mood-btn");
   if (!btn) return;
@@ -263,23 +275,19 @@ moodButtonsWrap.addEventListener("click", (event) => {
     .forEach((b) => b.classList.toggle("is-active", b === btn));
 });
 
-postVentBtn.addEventListener("click", () => {
+// Save entry
+postVentBtn.addEventListener("click", async () => {
   const text = ventInput.value.trim();
   if (!text) return;
 
-  const now = Date.now();
-  const newVent = {
-    id: "v-" + now + "-" + Math.random().toString(16).slice(2),
-    text,
-    mood: activeMood || "Uncategorized",
-    createdAt: now,
-    day: 1,
-    comments: []
-  };
+  const mood = activeMood || "Uncategorized";
+  const newVent = await createVentInDB(text, mood);
+  if (!newVent) return;
 
+  // Newest at top
   vents.unshift(newVent);
-  saveVents();
 
+  // Reset form
   ventInput.value = "";
   charCount.textContent = "0 / 600";
   panelCounter.textContent = "0 / 600 used";
@@ -290,6 +298,7 @@ postVentBtn.addEventListener("click", () => {
   renderVentsList();
 });
 
+// Navigation arrows
 prevVentBtn.addEventListener("click", () => {
   if (currentIndex > 0) {
     currentIndex--;
@@ -304,11 +313,13 @@ nextVentBtn.addEventListener("click", () => {
   }
 });
 
+// Keyboard arrows
 document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") prevVentBtn.click();
   if (e.key === "ArrowRight") nextVentBtn.click();
 });
 
+// Filter buttons
 filterButtonsWrap.addEventListener("click", (event) => {
   const btn = event.target.closest(".filter-btn");
   if (!btn) return;
@@ -322,41 +333,44 @@ filterButtonsWrap.addEventListener("click", (event) => {
   renderVentsList();
 });
 
+// Focus textarea
 focusCreateBtn.addEventListener("click", () => {
   ventInput.focus({ preventScroll: false });
   ventInput.scrollIntoView({ behavior: "smooth", block: "center" });
 });
 
+// Scroll to list
 openAllBtn.addEventListener("click", () => {
   ventsList.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
-commentForm.addEventListener("submit", (e) => {
+// Comments
+commentForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (currentIndex < 0 || currentIndex >= vents.length) return;
 
   const text = commentInput.value.trim();
   if (!text) return;
 
-  const now = Date.now();
   const vent = vents[currentIndex];
+  const saved = await createCommentInDB(vent, text);
+  if (!saved) return;
 
-  vent.comments = vent.comments || [];
-  vent.comments.push({
-    id: "c-" + now + "-" + Math.random().toString(16).slice(2),
-    text,
-    createdAt: now
-  });
+  if (!vent.comments) vent.comments = [];
+  vent.comments.push(saved);
 
   commentInput.value = "";
-  saveVents();
   renderComments(vent);
   renderVentsList();
 });
 
 // ---------- INIT ----------
 
-loadVents();
-currentIndex = vents.length ? 0 : -1;
-refreshCurrentVent();
-renderVentsList();
+async function init() {
+  await loadVentsFromDB();
+  currentIndex = vents.length ? 0 : -1;
+  refreshCurrentVent();
+  renderVentsList();
+}
+
+init();

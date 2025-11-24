@@ -16,9 +16,8 @@
   <div class="page">
     <header>
       <div class="brand">
-        <div class="brand-text">
+        <div>
           <div class="brand-name">LUAH</div>
-          <div class="brand-underline"></div>
           <div class="brand-tagline">
             A calm corner of the web to luah what’s on your mind.
           </div>
@@ -27,19 +26,18 @@
 
       <div class="pill">
         <span class="pill-dot"></span>
-        Local only · No accounts
+        Shared · No accounts
       </div>
     </header>
 
     <main>
-      <!-- HERO ------------------------------------------------>
+      <!-- HERO -->
       <section class="hero hero--centered">
         <div class="hero-copy">
           <h1>Take a breath. <span>Luah it out.</span></h1>
           <p>
-            Luah is a small, anonymous journal that lives in your browser.
-            <strong>Nothing is uploaded.</strong> Just you, your thoughts,
-            and a dark space to put them down.
+            Luah is a small, anonymous journal on the web.
+            <strong>Thoughts are stored in Supabase, not tied to your identity.</strong>
           </p>
 
           <div class="hero-meta">
@@ -61,7 +59,7 @@
         </div>
       </section>
 
-      <!-- CURRENT ENTRY CARD ---------------------------------->
+      <!-- CURRENT ENTRY CARD -->
       <section class="current-vent-wrap">
         <div class="hero-card">
           <div class="hero-card-inner">
@@ -125,7 +123,7 @@
 
       <div class="divider"></div>
 
-      <!-- BOTTOM LAYOUT -------------------------------------->
+      <!-- BOTTOM LAYOUT -->
       <section class="layout layout--below">
         <!-- CREATE PANEL -->
         <div class="panel">
@@ -135,7 +133,7 @@
               <div class="panel-counter" id="panelCounter">0 / 600 used</div>
             </div>
             <p class="panel-sub">
-              Choose a mood, type what’s on your mind, and save. Entries stay in this browser only.
+              Choose a mood, type what’s on your mind, and save.
             </p>
 
             <div class="moods" id="moodButtons">
@@ -217,10 +215,13 @@
     </main>
 
     <footer>
-      Built as a front-end practice project. Nothing is stored on a server.
+      Built as a tiny anonymous vent space. Nothing is stored with your name.
     </footer>
   </div>
 
-  <script src="app.js" defer></script>
+  <!-- Supabase + app scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

@@ -1,0 +1,48 @@
+name: Deploy Luah to GitHub Pages
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Inject Supabase config into index.html
+        run: |
+          SUPABASE_URL_ESCAPED=$(printf '%s\n' "${{ secrets.SUPABASE_URL }}" | sed 's/[&/]/\\&/g')
+          SUPABASE_KEY_ESCAPED=$(printf '%s\n' "${{ secrets.SUPABASE_ANON_KEY }}" | sed 's/[&/]/\\&/g')
+
+          sed -i \
+            -e "s|<meta name=\"supabase-url\" content=\"\">|<meta name=\"supabase-url\" content=\"${SUPABASE_URL_ESCAPED}\">|" \
+            -e "s|<meta name=\"supabase-anon-key\" content=\"\">|<meta name=\"supabase-anon-key\" content=\"${SUPABASE_KEY_ESCAPED}\">|" \
+            index.html
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

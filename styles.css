@@ -173,7 +173,7 @@ header {
   position: relative;
 }
 
-/* subtle glow ring behind the card */
+/* subtle glow ring behind card */
 .current-vent-wrap::before {
   content: "";
   position: absolute;
@@ -260,7 +260,7 @@ header {
   margin-top: 10px;
   border-radius: 20px;
   background: radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.06), transparent 55%),
-              radial-gradient(circle at 100% 100%, rgba(249, 115, 22, 0.08), transparent 55%),
+              radial-gradient(circle at 100% 100%, rgba(249,115,22,0.08), transparent 55%),
               var(--bg-softer);
   border: 1px solid rgba(148, 163, 184, 0.5);
   padding: 16px 14px 14px;
@@ -302,8 +302,6 @@ header {
 }
 
 .vent-body {
-  position: relative;
-  z-index: 1;
   font-size: 15px;
   line-height: 1.8;
   color: #f9fafb;
@@ -320,13 +318,11 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: relative;
-  z-index: 1;
   font-size: 11px;
   color: var(--text-dim);
 }
 
-/* arrows under card */
+/* arrows */
 
 .vent-nav {
   display: inline-flex;
@@ -346,12 +342,8 @@ header {
   justify-content: center;
   cursor: pointer;
   font-size: 14px;
-  transition:
-    transform var(--transition-fast),
-    background var(--transition-fast),
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast),
-    opacity var(--transition-fast);
+  transition: transform var(--transition-fast), background var(--transition-fast),
+    border-color var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
 }
 
 .vent-nav button:hover {
@@ -367,7 +359,7 @@ header {
   box-shadow: none;
 }
 
-/* small actions on right */
+/* actions */
 
 .vent-actions {
   display: flex;
@@ -386,16 +378,7 @@ header {
   cursor: pointer;
   padding: 4px 7px;
   border-radius: var(--radius-full);
-  transition:
-    background var(--transition-fast),
-    color var(--transition-fast),
-    transform var(--transition-fast);
-}
-
-.vent-actions button svg {
-  width: 14px;
-  height: 14px;
-  opacity: 0.8;
+  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
 }
 
 .vent-actions button:hover {
@@ -404,7 +387,7 @@ header {
   transform: translateY(-0.5px);
 }
 
-/* COMMENTS ------------------------------------------------ */
+/* COMMENTS */
 
 .comments {
   margin-top: 10px;
@@ -454,22 +437,6 @@ header {
   font-size: 12px;
   padding: 6px 10px;
   outline: none;
-  transition:
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast),
-    background var(--transition-fast),
-    transform var(--transition-fast);
-}
-
-.comment-form input::placeholder {
-  color: rgba(148, 163, 184, 0.7);
-}
-
-.comment-form input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.6);
-  background: rgba(15, 23, 42, 1);
-  transform: translateY(-0.5px);
 }
 
 .comment-form button {
@@ -477,41 +444,22 @@ header {
   border: none;
   padding: 0 12px;
   font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
   background: rgba(248, 250, 252, 0.98);
   color: #020617;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    transform var(--transition-fast),
-    box-shadow var(--transition-fast),
-    filter var(--transition-fast),
-    opacity var(--transition-fast);
+  cursor: pointer;
 }
 
-.comment-form button:hover {
-  transform: translateY(-0.5px);
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.95);
-}
-
-/* DIVIDER ------------------------------------------------- */
+/* DIVIDER */
 
 .divider {
   height: 1px;
   margin: 30px auto 24px;
   max-width: 900px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(148, 163, 184, 0.9),
-    transparent
-  );
+  background: linear-gradient(to right, transparent, rgba(148, 163, 184, 0.9), transparent);
   opacity: 0.8;
 }
 
-/* BOTTOM LAYOUT ------------------------------------------ */
+/* LAYOUT */
 
 .layout {
   display: grid;
@@ -525,26 +473,9 @@ header {
   .layout {
     grid-template-columns: minmax(0, 1fr);
   }
-
-  header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .hero-copy {
-    text-align: left;
-  }
-
-  .hero-meta {
-    justify-content: flex-start;
-  }
-
-  .current-vent-wrap {
-    margin-bottom: 32px;
-  }
 }
 
-/* PANELS -------------------------------------------------- */
+/* PANELS */
 
 .panel {
   background: var(--bg-soft);
@@ -553,31 +484,6 @@ header {
   padding: 18px 18px 16px;
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.95);
   position: relative;
-  overflow: hidden;
-}
-
-.panel::before {
-  content: "";
-  position: absolute;
-  inset: -30%;
-  background:
-    radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.14), transparent 60%),
-    radial-gradient(circle at 100% 100%, rgba(249, 115, 22, 0.12), transparent 60%);
-  opacity: 0.9;
-  pointer-events: none;
-  filter: blur(18px);
-}
-
-.panel-inner {
-  position: relative;
-  z-index: 1;
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
 }
 
 .panel-title {
@@ -589,7 +495,6 @@ header {
 
 .panel-title strong {
   color: #f9fafb;
-  font-weight: 600;
 }
 
 .panel-sub {
@@ -598,16 +503,7 @@ header {
   margin-bottom: 12px;
 }
 
-.panel-sub.small {
-  margin-bottom: 0;
-}
-
-.panel-counter {
-  font-size: 11px;
-  color: var(--text-dim);
-}
-
-/* MOOD BUTTONS -------------------------------------------- */
+/* MOOD BUTTONS */
 
 .moods {
   display: flex;
@@ -627,18 +523,6 @@ header {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition:
-    background var(--transition-fast),
-    border-color var(--transition-fast),
-    transform var(--transition-fast),
-    color var(--transition-fast),
-    box-shadow var(--transition-fast);
-}
-
-.mood-btn:hover {
-  background: rgba(15, 23, 42, 1);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.85);
 }
 
 .mood-btn .dot {
@@ -654,31 +538,14 @@ header {
 }
 
 /* mood colors */
-.mood-btn[data-mood="Calm"] .dot {
-  background: #22c55e;
-}
+.mood-btn[data-mood="Calm"] .dot { background: #22c55e; }
+.mood-btn[data-mood="Heavy"] .dot { background: #3b82f6; }
+.mood-btn[data-mood="Hopeful"] .dot { background: #22d3ee; }
+.mood-btn[data-mood="Tired"] .dot { background: #f97316; }
+.mood-btn[data-mood="Anxious"] .dot { background: #facc15; }
+.mood-btn[data-mood="Uncategorized"] .dot { background: #a855f7; }
 
-.mood-btn[data-mood="Heavy"] .dot {
-  background: #3b82f6;
-}
-
-.mood-btn[data-mood="Hopeful"] .dot {
-  background: #22d3ee;
-}
-
-.mood-btn[data-mood="Tired"] .dot {
-  background: #f97316;
-}
-
-.mood-btn[data-mood="Anxious"] .dot {
-  background: #facc15;
-}
-
-.mood-btn[data-mood="Uncategorized"] .dot {
-  background: #a855f7;
-}
-
-/* TEXTAREA ------------------------------------------------ */
+/* TEXTAREA */
 
 textarea {
   width: 100%;
@@ -688,56 +555,11 @@ textarea {
   border: 1px solid rgba(148, 163, 184, 0.7);
   background: rgba(15, 23, 42, 0.98);
   color: var(--text-main);
-  font-family: inherit;
-  font-size: 14px;
   padding: 14px 14px;
-  outline: none;
-  line-height: 1.8;
-  transition:
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast),
-    background var(--transition-fast),
-    transform var(--transition-fast);
+  font-size: 14px;
 }
 
-textarea::placeholder {
-  color: rgba(148, 163, 184, 0.75);
-}
-
-textarea:focus {
-  border-color: var(--accent);
-  box-shadow:
-    0 0 0 1px rgba(56, 189, 248, 0.7),
-    0 14px 30px rgba(15, 23, 42, 0.95);
-  background: rgba(15, 23, 42, 1);
-  transform: translateY(-1px);
-}
-
-/* FIELD META ---------------------------------------------- */
-
-.field-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 6px;
-  font-size: 11px;
-  color: var(--text-dim);
-}
-
-.tagline {
-  font-size: 11px;
-  color: var(--text-dim);
-}
-
-.chars {
-  font-variant-numeric: tabular-nums;
-}
-
-.chars.too-much {
-  color: var(--danger);
-}
-
-/* PRIMARY BUTTON ------------------------------------------ */
+/* PRIMARY BUTTON */
 
 .primary-btn {
   margin-top: 11px;
@@ -765,11 +587,6 @@ textarea:focus {
     opacity var(--transition-fast);
 }
 
-.primary-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
 .primary-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   border-color: var(--accent);
@@ -781,11 +598,10 @@ textarea:focus {
 .primary-btn:disabled {
   opacity: 0.4;
   cursor: default;
-  transform: none;
   box-shadow: none;
 }
 
-/* FILTER BUTTONS ------------------------------------------ */
+/* FILTER BUTTONS */
 
 .filters {
   display: flex;
@@ -802,21 +618,6 @@ textarea:focus {
   background: rgba(15, 23, 42, 0.96);
   color: var(--text-dim);
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  transition:
-    background var(--transition-fast),
-    border-color var(--transition-fast),
-    transform var(--transition-fast),
-    color var(--transition-fast),
-    box-shadow var(--transition-fast);
-}
-
-.filter-btn:hover {
-  transform: translateY(-1px);
-  background: rgba(15, 23, 42, 1);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.9);
 }
 
 .filter-btn.is-active {
@@ -825,119 +626,54 @@ textarea:focus {
   color: #f9fafb;
 }
 
-.filter-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(148, 163, 184, 0.85);
-}
-
-/* VENTS LIST ---------------------------------------------- */
+/* VENTS LIST */
 
 .vents-list {
   margin-top: 16px;
   max-height: 260px;
   overflow-y: auto;
-  padding-right: 4px;
-}
-
-.vents-list::-webkit-scrollbar {
-  width: 5px;
-}
-
-.vents-list::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.98);
-}
-
-.vents-list::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.9);
-  border-radius: 999px;
 }
 
 .vent-row {
   padding: 10px 9px;
   border-radius: 12px;
-  border: 1px solid transparent;
   background: rgba(15, 23, 42, 0.98);
   display: flex;
   flex-direction: column;
   gap: 4px;
   font-size: 12px;
   cursor: pointer;
-  transition:
-    border-color var(--transition-fast),
-    background var(--transition-fast),
-    transform var(--transition-fast),
-    box-shadow var(--transition-fast);
-}
-
-.vent-row + .vent-row {
-  margin-top: 8px;
 }
 
 .vent-row:hover {
   border-color: rgba(148, 163, 184, 0.95);
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.95);
 }
 
 .vent-row-top {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 10px;
   color: var(--text-dim);
-}
-
-.vent-row-mood {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
 }
 
 .vent-row-text {
   color: #f9fafb;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   overflow: hidden;
-}
-
-.vent-row-meta {
-  font-size: 10px;
-  color: var(--text-dim);
-  display: flex;
-  gap: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .empty-state {
   font-size: 12px;
   color: var(--text-dim);
   font-style: italic;
-  padding: 8px 4px;
 }
 
-/* FOOTER -------------------------------------------------- */
+/* FOOTER */
 
 footer {
   margin-top: 30px;
   font-size: 11px;
   color: var(--text-dim);
   text-align: center;
-}
-
-/* ANIMATION ----------------------------------------------- */
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.fade-in {
-  animation: fadeInUp 0.28s ease-out;
 }

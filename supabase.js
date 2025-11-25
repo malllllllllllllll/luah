@@ -1,7 +1,21 @@
 // supabase.js
-// Public client for Luah (safe in browser if RLS is configured properly)
+function readMeta(name) {
+  const el = document.querySelector(`meta[name="${name}"]`);
+  return el ? el.content : null;
+}
 
-const SUPABASE_URL = "https://wsimanizfxdfasahgzvb.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_gVPiEz6gXOoKgM_bNF3xIA_-zmIbI5H";
+const injected = window.__SUPABASE_CONFIG__ || {};
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL =
+  injected.url || readMeta("supabase-url") || "";
+const SUPABASE_ANON_KEY =
+  injected.anonKey || readMeta("supabase-anon-key") || "";
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error("Supabase config missing.");
+}
+
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);

@@ -5,6 +5,24 @@ let currentIndex = -1;
 let activeMood = "Uncategorized";
 let activeFilter = "All";
 
+// Basic client-side rate limit: block if too many writes in a short time
+const writeTimestamps = [];
+const MAX_WRITES_WINDOW = 5;      // 5 writes
+const WRITE_WINDOW_MS = 60_000;   // per 60 seconds
+
+function canWriteNow() {
+  const now = Date.now();
+  // Keep only last 60s
+  while (writeTimestamps.length && now - writeTimestamps[0] > WRITE_WINDOW_MS) {
+    writeTimestamps.shift();
+  }
+  if (writeTimestamps.length >= MAX_WRITES_WINDOW) {
+    return false;
+  }
+  writeTimestamps.push(now);
+  return true;
+}
+
 // DOM references
 const ventInput = document.getElementById("ventInput");
 const charCount = document.getElementById("charCount");
@@ -63,6 +81,16 @@ function formatTimeAgo(ts) {
 
   const days = Math.round(hours / 24);
   return `${days} d ago`;
+}
+
+// Normalize user text: trim and remove control chars
+function sanitizeUserText(value, maxLen) {
+  if (!value) return "";
+  let text = value.replace(/[\u0000-\u001F\u007F]/g, "").trim();
+  if (text.length > maxLen) {
+    text = text.slice(0, maxLen);
+  }
+  return text;
 }
 
 // ---------- SUPABASE LOAD / SAVE ----------
@@ -124,8 +152,11 @@ async function loadCommentsForVent(ventId) {
 function refreshCurrentVent() {
   if (!vents.length) {
     currentIndex = -1;
-    currentVentText.innerHTML =
-      '<span class="vent-body-placeholder">Your first entry will show up here. Write something below.</span>';
+    currentVentText.textContent = "";
+    const placeholder = document.createElement("span");
+    placeholder.className = "vent-body-placeholder";
+    placeholder.textContent = "Your first entry will show up here. Write something below.";
+    currentVentText.appendChild(placeholder);
     currentMoodLabel.textContent = "No mood yet";
     currentMoodDot.style.background = "rgba(148,163,184,0.7)";
     currentDayLabel.textContent = "Day 1";
@@ -166,8 +197,10 @@ function renderVentsList() {
       : vents.filter((v) => v.mood === activeFilter);
 
   if (!filtered.length) {
-    ventsList.innerHTML =
-      '<div class="empty-state">No entries in this filter yet. Write one on the left.</div>';
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = "No entries in this filter yet. Write one on the left.";
+    ventsList.appendChild(empty);
     return;
   }
 
@@ -176,16 +209,33 @@ function renderVentsList() {
     div.className = "vent-row";
     div.dataset.id = v.id;
 
-    div.innerHTML = `
-      <div class="vent-row-top">
-        <div class="vent-row-mood">${v.mood}</div>
-        <div style="font-size: 10px;">${formatTimeAgo(v.createdAt)}</div>
-      </div>
-      <div class="vent-row-text">${v.text}</div>
-      <div class="vent-row-meta">
-        <span>${(v.text || "").length} chars</span>
-      </div>
-    `;
+    const top = document.createElement("div");
+    top.className = "vent-row-top";
+
+    const moodEl = document.createElement("div");
+    moodEl.className = "vent-row-mood";
+    moodEl.textContent = v.mood || "Uncategorized";
+
+    const timeEl = document.createElement("div");
+    timeEl.className = "vent-time";
+    timeEl.textContent = formatTimeAgo(v.createdAt);
+
+    top.appendChild(moodEl);
+    top.appendChild(timeEl);
+
+    const textEl = document.createElement("div");
+    textEl.className = "vent-row-text";
+    textEl.textContent = v.text || "";
+
+    const meta = document.createElement("div");
+    meta.className = "vent-row-meta";
+    const span = document.createElement("span");
+    span.textContent = `${(v.text || "").length} chars`;
+    meta.appendChild(span);
+
+    div.appendChild(top);
+    div.appendChild(textEl);
+    div.appendChild(meta);
 
     div.addEventListener("click", () => {
       const idx = vents.findIndex((item) => item.id === v.id);
@@ -207,15 +257,26 @@ function renderComments(comments) {
   commentList.innerHTML = "";
 
   if (!comments.length) {
-    commentList.innerHTML =
-      '<div class="empty-state" style="font-style: italic; padding: 0;">No replies yet. Be the first.</div>';
+    const empty = document.createElement("div");
+    empty.className = "empty-state empty-italic";
+    empty.textContent = "No replies yet. Be the first.";
+    commentList.appendChild(empty);
     return;
   }
 
   comments.forEach((c) => {
     const div = document.createElement("div");
     div.className = "comment";
-    div.innerHTML = `<span>${formatTimeAgo(c.created_at)} · </span>${c.text}`;
+
+    const meta = document.createElement("span");
+    meta.textContent = `${formatTimeAgo(c.created_at)} · `;
+
+    const content = document.createElement("span");
+    content.textContent = c.text || "";
+
+    div.appendChild(meta);
+    div.appendChild(content);
+
     commentList.appendChild(div);
   });
 }
@@ -224,6 +285,11 @@ function renderComments(comments) {
 
 // Textarea typing
 ventInput.addEventListener("input", () => {
+  const sanitized = sanitizeUserText(ventInput.value, 600);
+  if (sanitized !== ventInput.value) {
+    ventInput.value = sanitized;
+  }
+
   const length = ventInput.value.length;
   charCount.textContent = `${length} / 600`;
   panelCounter.textContent = `${length} / 600 used`;
@@ -247,8 +313,13 @@ moodButtonsWrap.addEventListener("click", (event) => {
 
 // Save entry
 postVentBtn.addEventListener("click", async () => {
-  const text = ventInput.value.trim();
+  let text = sanitizeUserText(ventInput.value, 600);
   if (!text) return;
+
+  if (!canWriteNow()) {
+    console.warn("Rate limit hit: too many writes in a short time.");
+    return;
+  }
 
   postVentBtn.disabled = true;
 
@@ -345,8 +416,13 @@ commentForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (currentIndex < 0 || currentIndex >= vents.length) return;
 
-  const text = commentInput.value.trim();
+  const text = sanitizeUserText(commentInput.value, 300);
   if (!text) return;
+
+  if (!canWriteNow()) {
+    console.warn("Rate limit hit: too many writes in a short time.");
+    return;
+  }
 
   const vent = vents[currentIndex];
 

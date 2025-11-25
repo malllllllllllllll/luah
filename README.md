@@ -48,8 +48,7 @@ Files:
    cd luah
 For quick testing, inject your Supabase config in index.html before supabase.js:
 
-html
-Copy code
+
 <script>
   // Local dev only — do NOT commit real keys
   window.__SUPABASE_CONFIG__ = {
@@ -59,8 +58,8 @@ Copy code
 </script>
 Start a simple local server:
 
-bash
-Copy code
+In bash :
+
 python -m http.server 8080
 # then open http://localhost:8080 in your browser
 If you only want to test the UI with fake data, local-dev.js can be used to mock Supabase on localhost without any keys.

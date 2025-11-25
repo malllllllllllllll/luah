@@ -5,24 +5,6 @@ let currentIndex = -1;
 let activeMood = "Uncategorized";
 let activeFilter = "All";
 
-// Basic client-side rate limit: block if too many writes in a short time
-const writeTimestamps = [];
-const MAX_WRITES_WINDOW = 5;      // 5 writes
-const WRITE_WINDOW_MS = 60_000;   // per 60 seconds
-
-function canWriteNow() {
-  const now = Date.now();
-  // Keep only last 60s
-  while (writeTimestamps.length && now - writeTimestamps[0] > WRITE_WINDOW_MS) {
-    writeTimestamps.shift();
-  }
-  if (writeTimestamps.length >= MAX_WRITES_WINDOW) {
-    return false;
-  }
-  writeTimestamps.push(now);
-  return true;
-}
-
 // DOM references
 const ventInput = document.getElementById("ventInput");
 const charCount = document.getElementById("charCount");
@@ -81,16 +63,6 @@ function formatTimeAgo(ts) {
 
   const days = Math.round(hours / 24);
   return `${days} d ago`;
-}
-
-// Normalize user text: trim and remove control chars
-function sanitizeUserText(value, maxLen) {
-  if (!value) return "";
-  let text = value.replace(/[\u0000-\u001F\u007F]/g, "").trim();
-  if (text.length > maxLen) {
-    text = text.slice(0, maxLen);
-  }
-  return text;
 }
 
 // ---------- SUPABASE LOAD / SAVE ----------
@@ -152,11 +124,14 @@ async function loadCommentsForVent(ventId) {
 function refreshCurrentVent() {
   if (!vents.length) {
     currentIndex = -1;
+
     currentVentText.textContent = "";
     const placeholder = document.createElement("span");
     placeholder.className = "vent-body-placeholder";
-    placeholder.textContent = "Your first entry will show up here. Write something below.";
+    placeholder.textContent =
+      "Your first entry will show up here. Write something below.";
     currentVentText.appendChild(placeholder);
+
     currentMoodLabel.textContent = "No mood yet";
     currentMoodDot.style.background = "rgba(148,163,184,0.7)";
     currentDayLabel.textContent = "Day 1";
@@ -285,11 +260,6 @@ function renderComments(comments) {
 
 // Textarea typing
 ventInput.addEventListener("input", () => {
-  const sanitized = sanitizeUserText(ventInput.value, 600);
-  if (sanitized !== ventInput.value) {
-    ventInput.value = sanitized;
-  }
-
   const length = ventInput.value.length;
   charCount.textContent = `${length} / 600`;
   panelCounter.textContent = `${length} / 600 used`;
@@ -313,13 +283,8 @@ moodButtonsWrap.addEventListener("click", (event) => {
 
 // Save entry
 postVentBtn.addEventListener("click", async () => {
-  let text = sanitizeUserText(ventInput.value, 600);
+  const text = ventInput.value.trim();
   if (!text) return;
-
-  if (!canWriteNow()) {
-    console.warn("Rate limit hit: too many writes in a short time.");
-    return;
-  }
 
   postVentBtn.disabled = true;
 
@@ -416,13 +381,8 @@ commentForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (currentIndex < 0 || currentIndex >= vents.length) return;
 
-  const text = sanitizeUserText(commentInput.value, 300);
+  const text = commentInput.value.trim();
   if (!text) return;
-
-  if (!canWriteNow()) {
-    console.warn("Rate limit hit: too many writes in a short time.");
-    return;
-  }
 
   const vent = vents[currentIndex];
 
